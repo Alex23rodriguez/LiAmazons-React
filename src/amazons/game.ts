@@ -1,8 +1,8 @@
 import { Amazons, DEFAULT_POSITIONS } from "amazons-game-engine";
 import type { Move } from "amazons-game-engine/dist/types";
-import { Game } from "boardgame.io";
+import type { Game } from "boardgame.io";
 
-let amazons = Amazons(DEFAULT_POSITIONS[8]);
+let amazons = Amazons();
 // FOR DEBUGGING ONLY
 (window as any).amazons = amazons;
 
@@ -22,6 +22,11 @@ export const AmazonsGame: Game = {
         return { ...G };
       }
       amazons.move(m);
+      return { fen: amazons.fen() };
+    },
+    randomMove: (G: any, ctx: any) => {
+      let moves = amazons.moves();
+      amazons.move(moves[Math.floor(Math.random() * moves.length)]);
       return { fen: amazons.fen() };
     },
   },
