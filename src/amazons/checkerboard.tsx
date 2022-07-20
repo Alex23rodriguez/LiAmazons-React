@@ -9,6 +9,8 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Grid } from "./grid";
+import { coords_to_square, square_to_coords } from "amazons-game-engine";
+import { Square } from "amazons-game-engine/dist/types";
 
 /**
  * Checkerboard
@@ -39,18 +41,18 @@ import { Grid } from "./grid";
 type myProps = {
   rows: number;
   cols: number;
-  onClick: () => void;
+  onClick: ({ square }: { square: Square }) => void;
   primaryColor: string;
   secondaryColor: string;
-  highlightedSquares: object;
+  highlightedSquares: { [square: string]: string };
   style: object;
   children: Element | Element[];
 };
 
 export class Checkerboard extends React.Component<myProps, any> {
   static defaultProps = {
-    rows: 8,
-    cols: 8,
+    rows: 10,
+    cols: 10,
     onClick: () => {},
     primaryColor: "#d18b47",
     secondaryColor: "#ffce9e",
@@ -58,20 +60,26 @@ export class Checkerboard extends React.Component<myProps, any> {
     style: {},
   };
 
-  onClick = ({ x, y }) => {
-    this.props.onClick({ square: cartesianToAlgebraic(x, y, this.props.rows) });
+  onClick = ({ x, y }: any) => {
+    this.props.onClick({
+      square: coords_to_square(x, y, this.props.rows, this.props.cols),
+    });
   };
 
   render() {
-    // Convert the square="" prop to x and y.
-    const tokens = React.Children.map(this.props.children, (child) => {
+    // Convert the square="" prop to row and col.
+    const tokens = React.Children.map(this.props.children, (child: any) => {
       const square = child.props.square;
-      const { x, y } = algebraicToCartesian(square, this.props.rows);
-      return React.cloneElement(child, { x, y });
+      const { row, col } = square_to_coords(
+        square,
+        this.props.rows,
+        this.props.cols
+      );
+      return React.cloneElement(child, { row, col });
     });
 
     // Build colorMap with checkerboard pattern.
-    let colorMap = {};
+    let colorMap: { [key: string]: string } = {};
     for (let x = 0; x < this.props.cols; x++) {
       for (let y = 0; y < this.props.rows; y++) {
         const key = `${x},${y}`;
@@ -85,8 +93,12 @@ export class Checkerboard extends React.Component<myProps, any> {
 
     // Add highlighted squares.
     for (const square in this.props.highlightedSquares) {
-      const { x, y } = algebraicToCartesian(square, this.props.rows);
-      const key = `${x},${y}`;
+      const { row, col } = square_to_coords(
+        square as Square,
+        this.props.rows,
+        this.props.cols
+      );
+      const key = `${row},${col}`;
       colorMap[key] = this.props.highlightedSquares[square];
     }
 
@@ -102,29 +114,4 @@ export class Checkerboard extends React.Component<myProps, any> {
       </Grid>
     );
   }
-}
-
-/**
- * Given an algebraic notation, returns x and y values.
- * Example: A1 returns { x: 0, y: 0 }
- */
-export function algebraicToCartesian(square, rows = 8) {
-  let regexp = /([A-Za-z])(\d+)/g;
-  let match = regexp.exec(square);
-  if (match == null) {
-    throw "Invalid square provided: " + square;
-  }
-  let colSymbol = match[1].toLowerCase();
-  let col = colSymbol.charCodeAt(0) - "a".charCodeAt(0);
-  let row = parseInt(match[2]);
-  return { x: col, y: rows - row };
-}
-
-/**
- * Given an x and y values, returns algebraic notation.
- * Example: 0, 0 returns A1
- */
-export function cartesianToAlgebraic(x, y, rows = 8) {
-  let colSymbol = String.fromCharCode(x + "a".charCodeAt(0));
-  return colSymbol + (rows - y);
 }
