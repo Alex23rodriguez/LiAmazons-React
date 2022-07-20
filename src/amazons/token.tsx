@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2018 The boardgame.io Authors
  *
@@ -7,9 +6,10 @@
  * https://opensource.org/licenses/MIT.
  */
 
-import React from 'react';
-import PropTypes from 'prop-types';
-import { Square } from './grid';
+import React from "react";
+import PropTypes from "prop-types";
+import { Square } from "./grid";
+import { Square as TSquare } from "amazons-game-engine/dist/types";
 
 /**
  * Token
@@ -54,7 +54,20 @@ import { Square } from './grid';
  *   </Token>
  * </Grid>
  */
-export class Token extends React.Component {
+
+type myProps = {
+  row: number;
+  col: number;
+
+  square: TSquare;
+  animate: boolean;
+  draggable?: boolean;
+  shouldDrag: (coords) => boolean;
+};
+
+type myState = {};
+
+export class Token extends React.Component<myProps, myState> {
   static propTypes = {
     x: PropTypes.number,
     y: PropTypes.number,
@@ -79,7 +92,7 @@ export class Token extends React.Component {
     template: Square,
   };
 
-  constructor(props) {
+  constructor(props: myProps) {
     super(props);
     this.state = {
       ...this.getCoords(),
@@ -88,7 +101,7 @@ export class Token extends React.Component {
     };
   }
 
-  _startDrag = (e) => {
+  _startDrag = (e: any) => {
     if (this.props.draggable && this.props.shouldDrag(this.getCoords())) {
       e.preventDefault(); // Required for Safari/iOs.
       e = e.touches ? e.touches[0] : e;
@@ -178,7 +191,7 @@ export class Token extends React.Component {
    * @param {Object} nextProps Next props.
    */
   // eslint-disable-next-line react/no-deprecated
-  UNSAFE_componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps: myProps) {
     let oldCoord = this.getCoords();
     let newCoord = this.getCoords(nextProps);
 
@@ -209,13 +222,13 @@ export class Token extends React.Component {
     if (!shouldAdd) {
       addOrRemoveEventListener = svgEl.removeEventListener;
     }
-    addOrRemoveEventListener('touchmove', this._drag, { passive: false });
-    addOrRemoveEventListener('mousemove', this._drag, { passive: false });
-    addOrRemoveEventListener('mouseup', this._endDrag, { passive: false });
-    addOrRemoveEventListener('mouseleave', this._endDrag, { passive: false });
-    addOrRemoveEventListener('touchcancel', this._endDrag, { passive: false });
-    addOrRemoveEventListener('touchleave', this._endDrag, { passive: false });
-    addOrRemoveEventListener('touchend', this._endDrag, { passive: false });
+    addOrRemoveEventListener("touchmove", this._drag, { passive: false });
+    addOrRemoveEventListener("mousemove", this._drag, { passive: false });
+    addOrRemoveEventListener("mouseup", this._endDrag, { passive: false });
+    addOrRemoveEventListener("mouseleave", this._endDrag, { passive: false });
+    addOrRemoveEventListener("touchcancel", this._endDrag, { passive: false });
+    addOrRemoveEventListener("touchleave", this._endDrag, { passive: false });
+    addOrRemoveEventListener("touchend", this._endDrag, { passive: false });
   }
 
   /**
@@ -262,7 +275,7 @@ export class Token extends React.Component {
    * @return {Object} Object with x, y and z parameters.
    */
   getCoords(props = this.props) {
-    return { x: props.x, y: props.y, z: props.z };
+    return { row: props.row, col: props.col };
   }
 
   /**
@@ -284,8 +297,8 @@ export class Token extends React.Component {
    */
   _eventListeners() {
     return [
-      { name: 'mousedown', callback: this._startDrag },
-      { name: 'touchstart', callback: this._startDrag },
+      { name: "mousedown", callback: this._startDrag },
+      { name: "touchstart", callback: this._startDrag },
     ];
   }
 

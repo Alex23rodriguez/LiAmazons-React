@@ -1,5 +1,5 @@
-import { Amazons, RANKS } from "amazons-game-engine";
-import { Piece, Square } from "amazons-game-engine/dist/types";
+import { Amazons, coords_to_square, RANKS } from "amazons-game-engine";
+import { Coords, Piece, Square } from "amazons-game-engine/dist/types";
 import React from "react";
 import Chat from "./chat";
 import { Checkerboard } from "./checkerboard";
@@ -96,7 +96,7 @@ export class AmazonsBoard extends React.Component<myProps, myState> {
         const token = (
           <Token
             // draggable={true}
-            // shouldDrag={true}
+            // shouldDrag={this._shouldDrag}
             // onDrag={this._onDrag}
             // onDrop={this._onDrop}
             square={square}
@@ -134,4 +134,23 @@ export class AmazonsBoard extends React.Component<myProps, myState> {
     }
     console.log("invalid type!!");
   }
+  _isSelectable(sq: Square) {
+    let moves = this.amazons.moves_dict()[sq];
+    return (
+      moves &&
+      // piece.color === this._getCurrentPlayer() &&
+      moves.length > 0
+    );
+  }
+  _shouldDrag = (coords: Coords) => {
+    const square = coords_to_square(coords, this.amazons);
+    const result = this.props.isActive && this._isSelectable(square);
+    if (result) {
+      this.setState({
+        ...this.state,
+        dragged: this._getInitialCell(square),
+      });
+      return true;
+    }
+  };
 }

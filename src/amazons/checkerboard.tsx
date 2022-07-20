@@ -10,7 +10,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Grid } from "./grid";
 import { coords_to_square, square_to_coords } from "amazons-game-engine";
-import { Square } from "amazons-game-engine/dist/types";
+import { Coords, Square } from "amazons-game-engine/dist/types";
 
 /**
  * Checkerboard
@@ -60,9 +60,9 @@ export class Checkerboard extends React.Component<myProps, any> {
     style: {},
   };
 
-  onClick = ({ x, y }: any) => {
+  onClick = (coords: Coords) => {
     this.props.onClick({
-      square: coords_to_square(x, y, this.props.rows, this.props.cols),
+      square: coords_to_square(coords, this.props.rows, this.props.cols),
     });
   };
 
