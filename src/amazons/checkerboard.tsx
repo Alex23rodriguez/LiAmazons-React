@@ -35,21 +35,19 @@ import { Grid } from "./grid";
  *   </Token>
  * </Checkerboard>
  */
-export class Checkerboard extends React.Component {
-  static propTypes = {
-    rows: PropTypes.number,
-    cols: PropTypes.number,
-    onClick: PropTypes.func,
-    primaryColor: PropTypes.string,
-    secondaryColor: PropTypes.string,
-    highlightedSquares: PropTypes.object,
-    style: PropTypes.object,
-    children: PropTypes.oneOfType([
-      PropTypes.arrayOf(PropTypes.element),
-      PropTypes.element,
-    ]),
-  };
 
+type myProps = {
+  rows: number;
+  cols: number;
+  onClick: () => void;
+  primaryColor: string;
+  secondaryColor: string;
+  highlightedSquares: object;
+  style: object;
+  children: Element | Element[];
+};
+
+export class Checkerboard extends React.Component<myProps, any> {
   static defaultProps = {
     rows: 8,
     cols: 8,

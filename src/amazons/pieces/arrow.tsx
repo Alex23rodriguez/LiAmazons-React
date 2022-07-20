@@ -12,7 +12,8 @@ import PropTypes from "prop-types";
 type myProps = {
   color: string;
 };
-export class Queen extends React.Component<myProps> {
+
+export class Arrow extends React.Component<myProps> {
   static propTypes = {
     color: PropTypes.string,
   };
