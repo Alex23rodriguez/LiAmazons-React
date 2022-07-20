@@ -1,8 +1,11 @@
 import { Amazons, RANKS } from "amazons-game-engine";
-import { Square } from "amazons-game-engine/dist/types";
+import { Piece, Square } from "amazons-game-engine/dist/types";
 import React from "react";
 import Chat from "./chat";
 import { Checkerboard } from "./checkerboard";
+import { Arrow } from "./pieces/arrow";
+import { Queen } from "./pieces/queen";
+import { Token } from "./token";
 
 type myProps = {
   G: any;
@@ -79,11 +82,32 @@ export class AmazonsBoard extends React.Component<myProps, myState> {
       for (let m of this.amazons.moves()) result[m[0]] = MOVABLE_COLOR;
       return result;
     }
+    // TODO not shooting
   }
 
   _getPieces() {
     let dragged = [];
+    // TODO add dragged
     let result: any = [];
+
+    let pieces = this.amazons.pieces();
+    for (const [type, squares] of Object.entries(pieces))
+      for (const square of squares) {
+        const token = (
+          <Token
+            // draggable={true}
+            // shouldDrag={true}
+            // onDrag={this._onDrag}
+            // onDrop={this._onDrop}
+            square={square}
+            animate={true}
+            // key={this._getInitialCell(square)}
+          >
+            {this._getPieceByTypeAndColor(type)}
+          </Token>
+        );
+        result.push(token);
+      }
     return result;
   }
 
@@ -98,5 +122,16 @@ export class AmazonsBoard extends React.Component<myProps, myState> {
         </p>
       );
     }
+  }
+  _getPieceByTypeAndColor(type: string) {
+    switch (type) {
+      case "b":
+        return <Queen color="b" />;
+      case "w":
+        return <Queen color="w" />;
+      case "a":
+        return <Arrow color="b" />;
+    }
+    console.log("invalid type!!");
   }
 }
