@@ -1,61 +1,55 @@
-export const AmazonsBoard = () => <div>Hello</div>; //TODO
-
-/*
- * Copyright 2018 The boardgame.io Authors.
- *
- * Use of this source code is governed by a MIT-style
- * license that can be found in the LICENSE file or at
- * https://opensource.org/licenses/MIT.
- */
-
+import { Amazons, RANKS } from "amazons-game-engine";
+import { Square } from "amazons-game-engine/dist/types";
 import React from "react";
-import PropTypes from "prop-types";
-import { Amazons } from "amazons-game-engine";
-import { Checkerboard, cartesianToAlgebraic } from "./checkerboard";
-import { Token } from "./token";
 import Chat from "./chat";
-import { Queen } from "./pieces/queen";
+import { Checkerboard } from "./checkerboard";
 
-const COL_NAMES = "abcdefghijklmnopqrstuvwxyz";
+type myProps = {
+  G: any;
+  ctx: any;
+  moves: any;
+  playerID?: string;
+  isActive?: boolean;
+  isMultiplayer: boolean;
+  isConnected?: boolean;
+  sendChatMessage?: (msg: string) => void;
+  chatMessages?: string[];
+};
+
+type myState = {
+  selected: Square | null;
+  highlighted: Square | null;
+  dragged: Square | null;
+};
+
 const HIGHLIGHTED_COLOR = "green";
 const MOVABLE_COLOR = "palegreen";
 
-class Board extends React.Component {
-  static propTypes = {
-    G: PropTypes.any.isRequired,
-    ctx: PropTypes.any.isRequired,
-    moves: PropTypes.any.isRequired,
-    playerID: PropTypes.string,
-    isActive: PropTypes.bool,
-    isMultiplayer: PropTypes.bool,
-    isConnected: PropTypes.bool,
-    sendChatMessage: PropTypes.func,
-    chatMessages: PropTypes.array,
-  };
-
-  public amazons;
-
+export class AmazonsBoard extends React.Component<myProps, myState> {
+  private amazons;
   constructor(props: any) {
     super(props);
     this.amazons = Amazons();
   }
 
   state = {
-    selected: "",
-    highlighted: "",
-    dragged: "",
+    selected: null,
+    highlighted: null,
+    dragged: null,
   };
 
   render() {
-    if (this.props.G.pgn !== undefined) {
-      this.amazons.load_pgn(this.props.G.pgn);
+    if (this.props.G.fen !== undefined) {
+      this.amazons.load(this.props.G.fen);
     }
-    let disconnected = null;
+
+    let disconnected: JSX.Element | null = null;
     if (this.props.isMultiplayer && !this.props.isConnected) {
       disconnected = <p>Disconnected!</p>;
     }
+
     return (
-      <div id="board">
+      <div>
         <Checkerboard
           highlightedSquares={this._getHighlightedSquares()}
           style={{ width: "400px" }}
@@ -76,139 +70,27 @@ class Board extends React.Component {
     );
   }
 
-  click = ({ square }) => {
-    if (!this.props.isActive) {
-      return;
-    }
-
-    if (!this.state.selected && this._isSelectable(square)) {
-      this.setState({ ...this.state, selected: square, highlighted: square });
-    } else if (this.state.selected) {
-      this._tryMove(this.state.selected, square);
-    }
-  };
+  click = () => {};
 
   _getHighlightedSquares() {
-    let result = {};
-    for (let move of this._getMoves()) {
-      result[move.to] = MOVABLE_COLOR;
+    let result: { [square: string]: string } = {};
+    if (this.amazons.shooting()) {
+      result[this.amazons.shooting_sq()] = HIGHLIGHTED_COLOR;
+      for (let m of this.amazons.moves()) result[m[0]] = MOVABLE_COLOR;
+      return result;
     }
-    if (this.state.highlighted) {
-      result[this.state.highlighted] = HIGHLIGHTED_COLOR;
-    }
-    return result;
-  }
-
-  _shouldDrag = ({ x, y }) => {
-    const square = cartesianToAlgebraic(x, y);
-    const result = this.props.isActive && this._isSelectable(square);
-    if (result) {
-      this.setState({
-        ...this.state,
-        dragged: this._getInitialCell(square),
-      });
-      return true;
-    }
-  };
-
-  _onDrag = ({ x, y, originalX, originalY }) => {
-    if (Math.sqrt((x - originalX) ** 2 + (y - originalY) ** 2) > 0.2) {
-      this.setState({
-        ...this.state,
-        selected: this._getSquare(originalX, originalY),
-        highlighted: this._getSquare(x, y),
-      });
-    } else {
-      this.setState({
-        ...this.state,
-        selected: "",
-        highlighted: "",
-      });
-    }
-  };
-
-  _onDrop = ({ x, y }) => {
-    if (this.state.selected) {
-      this.setState({ ...this.state, dragged: "" });
-      this._tryMove(this.state.selected, this._getSquare(x, y));
-    }
-  };
-
-  _getSquare(x, y) {
-    return cartesianToAlgebraic(this._getInRange(x), this._getInRange(y));
-  }
-
-  _getInRange(x) {
-    return Math.max(Math.min(Math.round(x), 7), 0);
   }
 
   _getPieces() {
     let dragged = [];
-    let result = [];
-    for (let y = 1; y <= 8; y++) {
-      for (let x = 0; x < 8; x++) {
-        let square = COL_NAMES[x] + y;
-        let piece = this.amazons.get(square);
-        if (piece) {
-          const token = (
-            <Token
-              draggable={true}
-              shouldDrag={this._shouldDrag}
-              onDrag={this._onDrag}
-              onDrop={this._onDrop}
-              square={square}
-              animate={true}
-              key={this._getInitialCell(square)}
-            >
-              {this._getPieceByTypeAndColor(piece.type, piece.color)}
-            </Token>
-          );
-          if (square === this.state.dragged) {
-            result.push(token);
-          } else {
-            dragged.push(token);
-          }
-        }
-      }
-    }
-    return dragged.concat(result);
-  }
-
-  _getPieceByTypeAndColor(type, color) {
-    switch (type) {
-      case "b":
-        return <Bishop color={color} />;
-      case "k":
-        return <King color={color} />;
-      case "n":
-        return <Knight color={color} />;
-      case "p":
-        return <Pawn color={color} />;
-      case "q":
-        return <Queen color={color} />;
-      case "r":
-        return <Rook color={color} />;
-    }
+    let result: any = [];
+    return result;
   }
 
   _getStatus() {
     let message = null;
-    if (this.amazons.in_check()) {
-      message = "CHECK";
-    }
-    if (this.props.ctx.winner) {
-      switch (this.props.ctx.winner) {
-        case "b":
-          message = "Black won!";
-          break;
-        case "w":
-          message = "White won!";
-          break;
-        case "d":
-          message = "Draw!";
-          break;
-      }
-    }
+    if (this.amazons.game_over()) message = "Game Over!";
+
     if (message) {
       return (
         <p>
@@ -217,54 +99,4 @@ class Board extends React.Component {
       );
     }
   }
-
-  _getInitialCell(square) {
-    let history = this.amazons.history({ verbose: true });
-    let lastSeen = square;
-    for (let i = history.length - 1; i >= 0; i--) {
-      let move = history[i];
-      if (lastSeen == move.to) {
-        lastSeen = move.from;
-      }
-    }
-    return lastSeen;
-  }
-
-  _isSelectable(square) {
-    let piece = this.amazons.get(square);
-    return (
-      piece &&
-      piece.color === this._getCurrentPlayer() &&
-      this.amazons.moves({ square }).length > 0
-    );
-  }
-
-  _getCurrentPlayer() {
-    if (this.props.ctx.currentPlayer == 0) {
-      return "w";
-    } else {
-      return "b";
-    }
-  }
-
-  _getMoves() {
-    if (!this.state.selected) {
-      return [];
-    }
-    return this.amazons.moves({
-      verbose: true,
-      square: this.state.selected,
-    });
-  }
-
-  _tryMove(from, to) {
-    const moves = this._getMoves();
-    const move = moves.find((move) => move.from == from && move.to == to);
-    if (move) {
-      this.props.moves.move(move.san);
-    }
-    this.setState({ ...this.state, selected: "", highlighted: "" });
-  }
 }
-
-export default Board;
