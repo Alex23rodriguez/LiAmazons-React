@@ -9,7 +9,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Square } from "./grid";
-import { Square as TSquare } from "amazons-game-engine/dist/types";
+import { Coords, Square as TSquare } from "amazons-game-engine/dist/types";
 
 /**
  * Token
@@ -62,7 +62,7 @@ type myProps = {
   square: TSquare;
   animate: boolean;
   draggable?: boolean;
-  shouldDrag: (coords) => boolean;
+  shouldDrag: (coords: Coords) => boolean;
 };
 
 type myState = {};

@@ -54,6 +54,7 @@ export class AmazonsBoard extends React.Component<myProps, myState> {
     return (
       <div>
         <Checkerboard
+          size={this.amazons.size()}
           highlightedSquares={this._getHighlightedSquares()}
           style={{ width: "400px" }}
           onClick={this.click}
@@ -143,7 +144,7 @@ export class AmazonsBoard extends React.Component<myProps, myState> {
     );
   }
   _shouldDrag = (coords: Coords) => {
-    const square = coords_to_square(coords, this.amazons);
+    const square = coords_to_square(coords, this.amazons.size());
     const result = this.props.isActive && this._isSelectable(square);
     if (result) {
       this.setState({

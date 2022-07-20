@@ -7,10 +7,9 @@
  */
 
 import React from "react";
-import PropTypes from "prop-types";
 import { Grid } from "./grid";
 import { coords_to_square, square_to_coords } from "amazons-game-engine";
-import { Coords, Square } from "amazons-game-engine/dist/types";
+import { Coords, Size, Square } from "amazons-game-engine/dist/types";
 
 /**
  * Checkerboard
@@ -39,8 +38,7 @@ import { Coords, Square } from "amazons-game-engine/dist/types";
  */
 
 type myProps = {
-  rows: number;
-  cols: number;
+  size: Size;
   onClick: ({ square }: { square: Square }) => void;
   primaryColor: string;
   secondaryColor: string;
@@ -62,7 +60,7 @@ export class Checkerboard extends React.Component<myProps, any> {
 
   onClick = (coords: Coords) => {
     this.props.onClick({
-      square: coords_to_square(coords, this.props.rows, this.props.cols),
+      square: coords_to_square(coords, this.props.size),
     });
   };
 
@@ -70,18 +68,15 @@ export class Checkerboard extends React.Component<myProps, any> {
     // Convert the square="" prop to row and col.
     const tokens = React.Children.map(this.props.children, (child: any) => {
       const square = child.props.square;
-      const { row, col } = square_to_coords(
-        square,
-        this.props.rows,
-        this.props.cols
-      );
+      const { row, col } = square_to_coords(square, this.props.size);
       return React.cloneElement(child, { row, col });
     });
 
     // Build colorMap with checkerboard pattern.
     let colorMap: { [key: string]: string } = {};
-    for (let x = 0; x < this.props.cols; x++) {
-      for (let y = 0; y < this.props.rows; y++) {
+    let { rows, cols } = this.props.size;
+    for (let x = 0; x < cols; x++) {
+      for (let y = 0; y < rows; y++) {
         const key = `${x},${y}`;
         let color = this.props.secondaryColor;
         if ((x + y) % 2 == 0) {
@@ -93,19 +88,15 @@ export class Checkerboard extends React.Component<myProps, any> {
 
     // Add highlighted squares.
     for (const square in this.props.highlightedSquares) {
-      const { row, col } = square_to_coords(
-        square as Square,
-        this.props.rows,
-        this.props.cols
-      );
+      const { row, col } = square_to_coords(square as Square, this.props.size);
       const key = `${row},${col}`;
       colorMap[key] = this.props.highlightedSquares[square];
     }
 
     return (
       <Grid
-        rows={this.props.rows}
-        cols={this.props.cols}
+        rows={this.props.size.rows}
+        cols={this.props.size.cols}
         style={this.props.style}
         onClick={this.onClick}
         colorMap={colorMap}
