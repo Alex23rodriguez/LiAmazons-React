@@ -74,7 +74,18 @@ export class AmazonsBoard extends React.Component<myProps, myState> {
     );
   }
 
-  click = () => {};
+  click = ({ square }: { square: Square }) => {
+    if (!this.props.isActive) {
+      console.log("board: props not isActive");
+      return;
+    }
+
+    if (!this.state.selected && this._isSelectable(square)) {
+      this.setState({ ...this.state, selected: square, highlighted: square });
+    } else if (this.state.selected) {
+      this._tryMove(this.state.selected, square);
+    }
+  };
 
   _getHighlightedSquares() {
     let result: { [square: string]: string } = {};
@@ -111,9 +122,13 @@ export class AmazonsBoard extends React.Component<myProps, myState> {
             }
           </Token>
         );
-        result.push(token);
+        if (square === this.state.dragged) {
+          result.push(token);
+        } else {
+          dragged.push(token);
+        }
       }
-    return result;
+    return dragged.concat(result);
   }
 
   _getStatus() {
@@ -134,10 +149,10 @@ export class AmazonsBoard extends React.Component<myProps, myState> {
         return <Queen color="b" />;
       case "w":
         return <Queen color="w" />;
-      case "a":
+      case "x":
         return <Arrow color="b" />;
     }
-    console.log("invalid type!!");
+    console.log("invalid type!!", type);
     return <></>;
   }
   _isSelectable(sq: Square) {
@@ -201,7 +216,14 @@ export class AmazonsBoard extends React.Component<myProps, myState> {
     return this.amazons.moves_dict()[this.state.selected];
   }
   _tryMove(from: Square, to: Square) {
+    console.log("before");
+    console.log("board", this.amazons.fen());
+    console.log("game", this.props.G.fen);
+
     if (this.amazons.move([from, to])) this.props.moves.move([from, to]);
+    console.log("after");
+    console.log("board", this.amazons.fen());
+    console.log("game", this.props.G.fen);
 
     this.setState({ ...this.state, selected: null, highlighted: null });
   }

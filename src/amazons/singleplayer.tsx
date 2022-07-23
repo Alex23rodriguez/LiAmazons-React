@@ -4,7 +4,7 @@ import { AmazonsBoard } from "./board";
 
 const App = Client({
   game: AmazonsGame,
-  board: AmazonsBoard,
+  board: AmazonsBoard as any,
   debug: true,
 });
 

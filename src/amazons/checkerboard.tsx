@@ -44,7 +44,7 @@ type myProps = {
   secondaryColor: string;
   highlightedSquares: { [square: string]: string };
   style: object;
-  children: Element | Element[];
+  children: Element[];
 };
 
 export class Checkerboard extends React.Component<myProps, any> {
@@ -58,9 +58,9 @@ export class Checkerboard extends React.Component<myProps, any> {
     style: {},
   };
 
-  onClick = (coords: Coords) => {
+  onClick = ({ x, y }: any) => {
     this.props.onClick({
-      square: coords_to_square(coords, this.props.size),
+      square: coords_to_square({ row: y, col: x }, this.props.size),
     });
   };
 
@@ -69,7 +69,7 @@ export class Checkerboard extends React.Component<myProps, any> {
     const tokens = React.Children.map(this.props.children, (child: any) => {
       const square = child.props.square;
       const { row, col } = square_to_coords(square, this.props.size);
-      return React.cloneElement(child, { row, col });
+      return React.cloneElement(child, { x: col, y: row });
     });
 
     // Build colorMap with checkerboard pattern.
@@ -88,8 +88,11 @@ export class Checkerboard extends React.Component<myProps, any> {
 
     // Add highlighted squares.
     for (const square in this.props.highlightedSquares) {
-      const { row, col } = square_to_coords(square as Square, this.props.size);
-      const key = `${row},${col}`;
+      const { col: x, row: y } = square_to_coords(
+        square as Square,
+        this.props.size
+      );
+      const key = `${x},${y}`;
       colorMap[key] = this.props.highlightedSquares[square];
     }
 
