@@ -2,7 +2,9 @@ import { Amazons } from "amazons-game-engine";
 import type { Move } from "amazons-game-engine/dist/types";
 import type { Game } from "boardgame.io";
 
-let amazons = Amazons();
+let amazons = Amazons(6);
+console.log(amazons.fen());
+
 // FOR DEBUGGING ONLY
 (window as any).amazons = amazons;
 

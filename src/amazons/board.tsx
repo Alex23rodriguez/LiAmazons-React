@@ -1,5 +1,5 @@
-import { Amazons, coords_to_square, RANKS } from "amazons-game-engine";
-import { Coords, Piece, Square } from "amazons-game-engine/dist/types";
+import { Amazons, coords_to_square } from "amazons-game-engine";
+import { FEN, Square } from "amazons-game-engine/dist/types";
 import React from "react";
 import Chat from "./chat";
 import { Checkerboard } from "./checkerboard";
@@ -8,7 +8,7 @@ import { Queen } from "./pieces/queen";
 import { Token } from "./token";
 
 type myProps = {
-  G: any;
+  G: { fen: string };
   ctx: any;
   moves: any;
   playerID?: string;
@@ -32,7 +32,7 @@ export class AmazonsBoard extends React.Component<myProps, myState> {
   private amazons;
   constructor(props: any) {
     super(props);
-    this.amazons = Amazons();
+    this.amazons = Amazons(this.props.G.fen as FEN);
   }
 
   state = {
@@ -96,15 +96,19 @@ export class AmazonsBoard extends React.Component<myProps, myState> {
       for (const square of squares) {
         const token = (
           <Token
-            // draggable={true}
-            // shouldDrag={this._shouldDrag}
-            // onDrag={this._onDrag}
-            // onDrop={this._onDrop}
+            draggable={true}
+            shouldDrag={this._shouldDrag}
+            onDrag={this._onDrag}
+            onDrop={this._onDrop}
             square={square}
             animate={true}
-            // key={this._getInitialCell(square)}
+            key={square}
           >
-            {this._getPieceByTypeAndColor(type)}
+            {
+              this._getPieceByTypeAndColor(
+                type
+              ) as any /*TODO difference between ReactElement and JSX.Element*/
+            }
           </Token>
         );
         result.push(token);
@@ -134,6 +138,7 @@ export class AmazonsBoard extends React.Component<myProps, myState> {
         return <Arrow color="b" />;
     }
     console.log("invalid type!!");
+    return <></>;
   }
   _isSelectable(sq: Square) {
     let moves = this.amazons.moves_dict()[sq];
@@ -143,15 +148,61 @@ export class AmazonsBoard extends React.Component<myProps, myState> {
       moves.length > 0
     );
   }
-  _shouldDrag = (coords: Coords) => {
-    const square = coords_to_square(coords, this.amazons.size());
+  _shouldDrag = ({ x, y }: { x: number; y: number }) => {
+    const square = coords_to_square({ row: y, col: x }, this.amazons.size());
     const result = this.props.isActive && this._isSelectable(square);
     if (result) {
       this.setState({
         ...this.state,
-        dragged: this._getInitialCell(square),
+        // dragged: this._getInitialCell(square), // TODO check out _getInitialCell
+        dragged: square,
       });
       return true;
     }
+    return false;
   };
+
+  _getSquare(x: number, y: number) {
+    return coords_to_square(
+      { row: this._getInRange(y), col: this._getInRange(x) },
+      this.amazons.size()
+    );
+  }
+
+  _getInRange(x: number) {
+    return Math.max(Math.min(Math.round(x), 7), 0);
+  }
+
+  _onDrag = ({ x, y, originalX, originalY }: any) => {
+    if (Math.sqrt((x - originalX) ** 2 + (y - originalY) ** 2) > 0.2) {
+      this.setState({
+        ...this.state,
+        selected: this._getSquare(originalX, originalY),
+        highlighted: this._getSquare(x, y),
+      });
+    } else {
+      this.setState({
+        ...this.state,
+        selected: null,
+        highlighted: null,
+      });
+    }
+  };
+  _onDrop = ({ x, y }: any) => {
+    if (this.state.selected) {
+      this.setState({ ...this.state, dragged: null });
+      this._tryMove(this.state.selected, this._getSquare(x, y));
+    }
+  };
+  _getMoves() {
+    if (!this.state.selected) {
+      return [];
+    }
+    return this.amazons.moves_dict()[this.state.selected];
+  }
+  _tryMove(from: Square, to: Square) {
+    if (this.amazons.move([from, to])) this.props.moves.move([from, to]);
+
+    this.setState({ ...this.state, selected: null, highlighted: null });
+  }
 }

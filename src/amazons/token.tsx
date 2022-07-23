@@ -56,16 +56,46 @@ import { Coords, Square as TSquare } from "amazons-game-engine/dist/types";
  */
 
 type myProps = {
-  row: number;
-  col: number;
-
+  x: number;
+  y: number;
+  z: number;
   square: TSquare;
   animate: boolean;
   draggable?: boolean;
-  shouldDrag: (coords: Coords) => boolean;
+  animationDuration: number;
+  onDrag: ({
+    x,
+    y,
+    originalX,
+    originalY,
+  }: {
+    x: number;
+    y: number;
+    originalX: number;
+    originalY: number;
+  }) => void;
+  onDrop: ({ x, y }: { x: number; y: number }) => void;
+  svgRef: any;
+  shouldDrag: ({ x, y }: { x: number; y: number }) => boolean;
+  template: any;
+  style: any;
+  onClick: any;
+  onMouseOver: any;
+  onMouseOut: any;
+  children: Element;
 };
 
-type myState = {};
+type myState = {
+  dragged: any;
+  usingTouch: any;
+  x: number;
+  y: number;
+  z: number;
+  originX: number;
+  originY: number;
+  originZ: number;
+  originTime: number;
+};
 
 export class Token extends React.Component<myProps, myState> {
   static propTypes = {
@@ -95,6 +125,7 @@ export class Token extends React.Component<myProps, myState> {
   constructor(props: myProps) {
     super(props);
     this.state = {
+      ...this.state,
       ...this.getCoords(),
       dragged: null,
       usingTouch: false,
@@ -113,7 +144,7 @@ export class Token extends React.Component<myProps, myState> {
     }
   };
 
-  _drag = (e) => {
+  _drag = (e: any) => {
     if (this.state.dragged) {
       e.preventDefault(); // Required for Safari/iOs.
       e = e.touches ? e.touches[0] : e;
@@ -142,11 +173,12 @@ export class Token extends React.Component<myProps, myState> {
     }
   };
 
-  _endDrag = (e) => {
+  _endDrag = (e: any) => {
     if (this.state.dragged) {
       e.preventDefault();
       // Whether this is a drop or a click depends if the mouse moved after drag.
       // Android will issue very small drag events, so we need a distance.
+
       const dist = Math.sqrt(
         (this.state.x - this.props.x) ** 2 + (this.state.y - this.props.y) ** 2
       );
@@ -154,8 +186,8 @@ export class Token extends React.Component<myProps, myState> {
         this.props.onDrop({
           x: this.state.x,
           y: this.state.y,
-          originalX: this.props.x,
-          originalY: this.props.y,
+          // originalX: this.props.x,
+          // originalY: this.props.y,
         });
       } else {
         this.props.onClick({ x: this.state.x, y: this.state.y });
@@ -170,7 +202,7 @@ export class Token extends React.Component<myProps, myState> {
     }
   };
 
-  _onClick = (param) => {
+  _onClick = (param: any) => {
     // Ignore onClick if the element is draggable, because desktops will
     // send both onClick and touch events, leading to duplication.
     // Whether this will be a click or a drop will be defined in _endDrag.
@@ -215,7 +247,7 @@ export class Token extends React.Component<myProps, myState> {
    * Add or remove event listeners.
    * @param {boolean} shouldAdd If it should add (or remove) listeners.
    */
-  _addOrRemoveDragEventListeners(shouldAdd) {
+  _addOrRemoveDragEventListeners(shouldAdd: any) {
     const svgEl = this.props.svgRef.current;
     if (!svgEl) return;
     let addOrRemoveEventListener = svgEl.addEventListener;
@@ -235,9 +267,9 @@ export class Token extends React.Component<myProps, myState> {
    * Recursively animates x and y.
    * @param {number} now Unix timestamp when this was called.
    */
-  _animate(now) {
+  _animate(now: any) {
     return (() => {
-      let elapsed = now - this.state.originTime;
+      let elapsed = 0; // now - this.state.originTime;
       let svgCoord = this.getCoords();
       if (elapsed < this.props.animationDuration && this.props.animate) {
         const percentage = this._easeInOutCubic(
@@ -275,7 +307,7 @@ export class Token extends React.Component<myProps, myState> {
    * @return {Object} Object with x, y and z parameters.
    */
   getCoords(props = this.props) {
-    return { row: props.row, col: props.col };
+    return { x: props.x, y: props.y, z: props.z };
   }
 
   /**
@@ -285,7 +317,7 @@ export class Token extends React.Component<myProps, myState> {
    * @param {number} c Final value.
    * @param {number} d Duration.
    */
-  _easeInOutCubic(t, b, c, d) {
+  _easeInOutCubic(t: number, b: number, c: number, d: number) {
     t /= d / 2;
     if (t < 1) return (c / 2) * t * t * t + b;
     t -= 2;
